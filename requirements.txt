@@ -1,0 +1,37 @@
+# Core Data Science
+numpy
+pandas
+scipy
+
+# Machine Learning
+scikit-learn
+joblib
+imbalanced-learn  # Para datos desbalanceados
+
+# Visualización
+matplotlib
+seaborn
+plotly
+
+# Generación de Reportes PDF
+reportlab  # Generación básica de PDF
+PyPDF2  # Manipulación de PDF
+fpdf2  # Alternativa simple para reportes
+weasyprint # HTML/CSS a PDF (para reportes avanzados)
+
+# Utilidades
+jupyter # Notebooks interactivos
+ipykernel  # Kernel para Jupyter
+tqdm # Barras de progreso
+pyyaml # Manejo de archivos de configuración
+
+# Preprocesamiento avanzado
+category_encoders  # Encoding de categorías
+
+# Reportes interactivos/HTML
+jinja2  # Plantillas para reportes
+nbconvert # Convertir notebooks a PDF/HTML
+pandas-profiling  # Informes automáticos EDA
+
+# Dashboarding
+streamlit  # Para crear apps interactivas

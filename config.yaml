@@ -1,0 +1,6 @@
+# ===== Rutas y Almacenamiento =====
+paths:
+  raw_data: "data/raw_dataset.csv"
+  models_dir: "models/"
+  reports_dir: "docs/model_reports/"
+  plots_dir: "docs/plots/"

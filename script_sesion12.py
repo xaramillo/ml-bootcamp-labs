@@ -9,6 +9,7 @@ import seaborn as sns
 
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import MinMaxScaler
 
 from sklearn.ensemble import RandomForestClassifier
@@ -80,6 +81,59 @@ xgb_y_pred = xgb_model.predict(X_test)
 
 print('Model XGB Done!')
 
+
+# Implementaciones de GrdSearch en ambos modelos
+
+rf_base = RandomForestClassifier(
+    random_state=23
+)
+
+rf_param_grid = {
+    'n_estimators': [500,1000,2500],
+    'max_depth':[None,10,20],
+    'min_samples_split':[2,5],
+}
+
+rf_grid = GridSearchCV(
+    rf_base,
+    param_grid=rf_param_grid,
+    cv=3,
+    scoring='f1_weighted',
+    n_jobs=-1,
+    verbose=2
+)
+
+rf_grid.fit(X_train,y_train)
+
+best_rf_grid = rf_grid.best_estimator_
+
+
+print("Mejores valores para RF:")
+print(best_rf_grid)
+
+rf_grid_y_pred = best_rf_grid.predict(X_test)
+
+
+xgb_base = XGBClassifier(eval_metric='mlogloss',random_state=23)
+xgb_param_grid = {
+    'n_estimators': [500,1000,2500],
+    'max_depth':[None,10,20],
+    'learning_rate':[0.01,.1,.25],
+}
+xgb_grid = GridSearchCV(
+    xgb_base,
+    param_grid=xgb_param_grid,
+    cv=3,
+    scoring='f1_weighted',
+    n_jobs=-1,
+    verbose=2
+)
+xgb_grid.fit(X_train,y_train)
+best_xgb_grid = xgb_grid.best_estimator_
+
+xgb_grid_y_pred = best_xgb_grid.predict(X_test)
+
+
 # 5. Evaluación
 
 def model_evaluation(nombre,y_true,y_pred):
@@ -94,5 +148,9 @@ def model_evaluation(nombre,y_true,y_pred):
 
 model_evaluation("Random Forest",y_test,rf_y_pred)
 model_evaluation("XGBoost", y_test,xgb_y_pred)
+
+model_evaluation("Random Forest con GridSearch",y_test,rf_grid_y_pred)
+model_evaluation("XGBoost con GridSearch",y_test,xgb_grid_y_pred)
+
 
 print('OK')

@@ -11,7 +11,7 @@ from joblib import dump
 def save_best_model(model,output_dir,output_name):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-    dump(model,os.path.join(output_dir,output_name,'.joblib'))
+    dump(model,os.path.join(output_dir,str(output_name)+'.joblib'))
 
 def train_RFC_classifier(X,y,output_dir='models/',seed=23):
     X_train, X_test, y_train, y_test = train_test_split(

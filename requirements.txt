@@ -38,3 +38,6 @@ ydata-profiling  # Informes automáticos EDA
 
 # Dashboarding
 streamlit  # Para crear apps interactivas
+
+# Orquestación y Automatización
+mlflow

@@ -1,26 +1,6 @@
-
-### ---- ANTES ----
-
-le = LabelEncoder()
-df['Event_Type'] = le.fit_transform(df['Event_Type'])
-
-# 3.3 Normalización (MinMax)
-
-X_prescale = df.drop(columns=['Event_Type'])
-
-scaler = MinMaxScaler()
-
-X = scaler.fit_transform(X_prescale)
-X = pd.DataFrame(X, columns=X_prescale.columns)
-
-y = df['Event_Type']
-
-# ----- ANTES ------
-
-# Refactorización
-
-from sklearn.preprocessing import MinMaxScaler, LabelEncoder, OneHotEncoder
+from sklearn.preprocessing import MinMaxScaler, OrdinalEncoder, OneHotEncoder
 from sklearn.pipeline import Pipeline
+from sklearn.impute import SimpleImputer
 from sklearn.compose import ColumnTransformer
 
 
@@ -36,16 +16,29 @@ Pipeline (
 
 """
 
+def preprocessing_target_pipeline(target_column):
+    # Paso 1.
+    target_preprocessing = Pipeline(
+        [
+            ('imputer', SimpleImputer(strategy='most_frequent')),  # Imputación de valores faltantes
+            ('encode', OrdinalEncoder())
+        ]
+    )
+    return target_preprocessing
+
+
 def preprocessing_pipeline(numeric_features,categorical_features):
     # Paso 1.
     numeric_preprocessing = Pipeline(
         [
+            ('imputer', SimpleImputer(strategy='mean')),  # Imputación de valores faltantes
             ('scaler', MinMaxScaler())
         ]
     )
     # Paso 2.
     categorical_preprocessing = Pipeline(
         [
+            ('imputer', SimpleImputer(strategy='most_frequent')),  # Imputación de valores faltantes
             ('encode',OneHotEncoder())
         ]
     )

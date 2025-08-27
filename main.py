@@ -1,8 +1,28 @@
 import os
 import mlflow
 import pandas as pd
+import numpy as np
+import time
+import psutil
+from sklearn.metrics import accuracy_score, recall_score, precision_score, f1_score, confusion_matrix, classification_report
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 from src import ingest, preprocess, train, evaluate
+
+def log_confusion_matrix(y_true, y_pred, labels, name):
+    plt.figure(figsize=(8,6))
+    cm = confusion_matrix(y_true, y_pred)
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=labels, yticklabels=labels)
+    plt.xlabel('Predicted')
+    plt.ylabel('True')
+    plt.title(f'Confusion Matrix: {name}')
+    plt.tight_layout()
+    fname = f'confusion_matrix_{name}.png'
+    plt.savefig(fname)
+    plt.close()
+    mlflow.log_artifact(fname)
+    os.remove(fname)
 
 def main():
     # 1. Ingesta de datos
@@ -30,24 +50,80 @@ def main():
 
     # 3. Entrenamiento
     mlflow.set_experiment('ml-pipeline')
-    with mlflow.start_run():
-        rf_model, X_test, y_test = train.train_RFC_classifier(X_processed,y_processed)
-        # 4. Evaluación RF
-        mse_rf = evaluate.evaluate_model(rf_model,X_test,y_test)
+    with mlflow.start_run() as run:
+        # System metrics before training
+        cpu_start = psutil.cpu_percent(interval=None)
+        ram_start = psutil.virtual_memory().percent
+        time_start = time.time()
 
+        rf_model, X_test, y_test = train.train_RFC_classifier(X_processed,y_processed)
+        y_pred_rf = rf_model.predict(X_test)
+        # Model metrics for RF
+        acc_rf = accuracy_score(y_test, y_pred_rf)
+        recall_rf = recall_score(y_test, y_pred_rf, average='weighted', zero_division=0)
+        precision_rf = precision_score(y_test, y_pred_rf, average='weighted', zero_division=0)
+        f1_rf = f1_score(y_test, y_pred_rf, average='weighted', zero_division=0)
+        report_rf = classification_report(y_test, y_pred_rf, output_dict=True, zero_division=0)
+        mlflow.log_metric('rf_accuracy', acc_rf)
+        mlflow.log_metric('rf_recall', recall_rf)
+        mlflow.log_metric('rf_precision', precision_rf)
+        mlflow.log_metric('rf_f1', f1_rf)
+        # Log per-class metrics
+        for label, scores in report_rf.items():
+            if isinstance(scores, dict):
+                for metric, value in scores.items():
+                    mlflow.log_metric(f'rf_{label}_{metric}', value)
         mlflow.sklearn.log_model(rf_model,'RandomForest')
+        log_confusion_matrix(y_test, y_pred_rf, labels=np.unique(y_test), name='RandomForest')
+
+        mlflow.register_model(
+            model_uri=f"runs:/{run.info.run_id}/RandomForest",
+            name="RandomForestClassifier"
+        )
 
         xgb_model, X_test, y_test = train.train_XGB_classifier(X_processed,y_processed)
-        # 4. Evaluación RF
-        mse_xgb = evaluate.evaluate_model(xgb_model,X_test,y_test)
-
+        y_pred_xgb = xgb_model.predict(X_test)
+        # Model metrics for XGB
+        acc_xgb = accuracy_score(y_test, y_pred_xgb)
+        recall_xgb = recall_score(y_test, y_pred_xgb, average='weighted', zero_division=0)
+        precision_xgb = precision_score(y_test, y_pred_xgb, average='weighted', zero_division=0)
+        f1_xgb = f1_score(y_test, y_pred_xgb, average='weighted', zero_division=0)
+        report_xgb = classification_report(y_test, y_pred_xgb, output_dict=True, zero_division=0)
+        mlflow.log_metric('xgb_accuracy', acc_xgb)
+        mlflow.log_metric('xgb_recall', recall_xgb)
+        mlflow.log_metric('xgb_precision', precision_xgb)
+        mlflow.log_metric('xgb_f1', f1_xgb)
+        for label, scores in report_xgb.items():
+            if isinstance(scores, dict):
+                for metric, value in scores.items():
+                    mlflow.log_metric(f'xgb_{label}_{metric}', value)
         mlflow.sklearn.log_model(xgb_model,'XGBoost')
+        log_confusion_matrix(y_test, y_pred_xgb, labels=np.unique(y_test), name='XGBoost')
 
-        mlflow.log_metric('mse_rf',mse_rf)
-        mlflow.log_metric('mse_xgb',mse_xgb)
+        mlflow.register_model(
+            model_uri=f"runs:/{run.info.run_id}/XGBoost",
+            name="XGBoostClassifier"
+        )
+
+        # System metrics after training
+        cpu_end = psutil.cpu_percent(interval=None)
+        ram_end = psutil.virtual_memory().percent
+        time_end = time.time()
+        mlflow.log_metric('cpu_percent_start', cpu_start)
+        mlflow.log_metric('cpu_percent_end', cpu_end)
+        mlflow.log_metric('ram_percent_start', ram_start)
+        mlflow.log_metric('ram_percent_end', ram_end)
+        mlflow.log_metric('training_duration_seconds', time_end - time_start)
 
         mlflow.log_param('numeric_features',numeric_features)
         mlflow.log_param('categorical_features',categorical_features)
+
+        # Log additional useful artifacts and environment
+        if os.path.exists("requirements.txt"):
+            mlflow.log_artifact("requirements.txt")
+        # Optionally log sample data or preprocessor
+        # pd.DataFrame(X_processed).to_csv("X_processed_sample.csv", index=False)
+        # mlflow.log_artifact("X_processed_sample.csv")
 
     # 5. Tracking y versionado
     # Implementar lógica específica o integrar con orquestador externo

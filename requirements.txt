@@ -26,6 +26,7 @@ jupyter # Notebooks interactivos
 ipykernel  # Kernel para Jupyter
 tqdm # Barras de progreso
 pyyaml # Manejo de archivos de configuración
+psutil
 
 # Preprocesamiento avanzado
 category_encoders  # Encoding de categorías

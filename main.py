@@ -8,7 +8,7 @@ from sklearn.metrics import accuracy_score, recall_score, precision_score, f1_sc
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from src import ingest, preprocess, train, evaluate
+from src import ingest, preprocess, train, evaluate, int_exp
 
 def log_confusion_matrix(y_true, y_pred, labels, name):
     plt.figure(figsize=(8,6))
@@ -43,10 +43,13 @@ def main():
     preprocessor = preprocess.preprocessing_pipeline(numeric_features, categorical_features)
     X = df.drop(columns=[target_column])
     X_processed = preprocessor.fit_transform(X)
+    # Get correct feature names after transformation
+    feature_names = preprocessor.get_feature_names_out()
 
     target_preprocessor = preprocess.preprocessing_target_pipeline([target_column])
     y = df[target_column].to_frame()
     y_processed = target_preprocessor.fit_transform(y)
+    y_processed = y_processed.ravel()  # <-- Flatten to 1D
 
     # 3. Entrenamiento
     mlflow.set_experiment('ml-pipeline')
@@ -106,6 +109,48 @@ def main():
             name="XGBoostClassifier"
         )
 
+        # Convert X_processed and X_test to DataFrame for SHAP/LIME compatibility
+        X_processed_df = pd.DataFrame(X_processed, columns=feature_names)
+        X_test_df = pd.DataFrame(X_test, columns=feature_names)
+        class_names = [str(c) for c in np.unique(y_processed)]
+
+        # --- Interpretability for RandomForest ---
+        shap_paths_rf, idx_rf, top_feature_rf = int_exp.explain_shap(
+            rf_model, X_processed_df, X_test_df, feature_names, model_name="RandomForest"
+        )
+        for path in shap_paths_rf:
+            mlflow.log_artifact(path)
+        lime_path_rf = int_exp.explain_lime(
+            rf_model, X_processed_df, X_test_df, feature_names, class_names, idx_rf, model_name="RandomForest"
+        )
+        mlflow.log_artifact(lime_path_rf)
+        # For PDP, use top 2 features by SHAP importance
+        importances_rf = np.abs(rf_model.feature_importances_)
+        top2_rf = np.argsort(importances_rf)[-2:]
+        pdp_path_rf = int_exp.explain_pdp(
+            rf_model, X_test_df, feature_names, top2_rf, model_name="RandomForest"
+        )
+        mlflow.log_artifact(pdp_path_rf)
+
+        # --- Interpretability for XGBoost ---
+        shap_paths_xgb, idx_xgb, top_feature_xgb = int_exp.explain_shap(
+            xgb_model, X_processed_df, X_test_df, feature_names, model_name="XGBoost"
+        )
+        for path in shap_paths_xgb:
+            mlflow.log_artifact(path)
+        lime_path_xgb = int_exp.explain_lime(
+            xgb_model, X_processed_df, X_test_df, feature_names, class_names, idx_xgb, model_name="XGBoost"
+        )
+        mlflow.log_artifact(lime_path_xgb)
+        # For PDP, use top 2 features by SHAP importance
+        shap_values_xgb = shap.TreeExplainer(xgb_model).shap_values(X_test_df)
+        importances_xgb = np.abs(shap_values_xgb).mean(axis=0)
+        top2_xgb = np.argsort(importances_xgb)[-2:]
+        pdp_path_xgb = int_exp.explain_pdp(
+            xgb_model, X_test_df, feature_names, top2_xgb, model_name="XGBoost"
+        )
+        mlflow.log_artifact(pdp_path_xgb)
+
         # System metrics after training
         cpu_end = psutil.cpu_percent(interval=None)
         ram_end = psutil.virtual_memory().percent
@@ -131,3 +176,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    # Implementar lógica específica o integrar con orquestador externo

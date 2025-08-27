@@ -84,6 +84,7 @@ def main():
         xgb_model, X_test, y_test = train.train_XGB_classifier(X_processed,y_processed)
         y_pred_xgb = xgb_model.predict(X_test)
         # Model metrics for XGB
+        # 4. Evaluación del modelo
         acc_xgb = accuracy_score(y_test, y_pred_xgb)
         recall_xgb = recall_score(y_test, y_pred_xgb, average='weighted', zero_division=0)
         precision_xgb = precision_score(y_test, y_pred_xgb, average='weighted', zero_division=0)

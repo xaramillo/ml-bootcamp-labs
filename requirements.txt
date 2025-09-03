@@ -8,6 +8,11 @@ scikit-learn
 joblib
 imbalanced-learn  # Para datos desbalanceados
 xgboost
+prophet  # Para modelos de series temporales
+
+# Interpretabilidad & Explicabilidad
+shap
+lime
 
 # Visualización
 matplotlib
@@ -25,10 +30,11 @@ jupyter # Notebooks interactivos
 ipykernel  # Kernel para Jupyter
 tqdm # Barras de progreso
 pyyaml # Manejo de archivos de configuración
+psutil
 
 # Preprocesamiento avanzado
 category_encoders  # Encoding de categorías
-tsfresh  # Extracción de características de series temporales
+tsfresh # Extracción de características de series temporales
 
 # Reportes interactivos/HTML
 jinja2  # Plantillas para reportes
@@ -39,4 +45,4 @@ ydata-profiling  # Informes automáticos EDA
 streamlit  # Para crear apps interactivas
 
 # Orquestación y Automatización
-mlflow  # Seguimiento de experimentos
+mlflow

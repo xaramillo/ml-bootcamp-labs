@@ -11,7 +11,9 @@ RUN apt-get update && apt-get install -y \
 COPY . .
 
 # Copia explícitamente la carpeta de modelos (si existe)
-COPY models ./models
+COPY models/* ./models/
+
+RUN ls -la ./models/
 
 # Instala las dependencias de Python
 RUN pip install --upgrade pip

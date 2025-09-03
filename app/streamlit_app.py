@@ -3,7 +3,13 @@ import pandas as pd
 import numpy as np
 import joblib
 import os
+import sys
 import mlflow
+
+# Añade el directorio raíz al sys.path para importar src
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from src.preprocess import preprocessing_pipeline
 
 # Cargar modelos
 MODEL_DIR = "./models"
@@ -34,8 +40,6 @@ if not model_loaded:
     st.stop()
 
 # Cargar pipeline de preprocesamiento
-from src.preprocess import preprocessing_pipeline
-import yaml
 
 # Asume que tienes los nombres de features guardados o los defines aquí
 numeric_features = st.session_state.get("numeric_features", [])

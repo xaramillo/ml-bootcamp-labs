@@ -28,6 +28,7 @@ pyyaml # Manejo de archivos de configuración
 
 # Preprocesamiento avanzado
 category_encoders  # Encoding de categorías
+tsfresh  # Extracción de características de series temporales
 
 # Reportes interactivos/HTML
 jinja2  # Plantillas para reportes
@@ -36,3 +37,6 @@ ydata-profiling  # Informes automáticos EDA
 
 # Dashboarding
 streamlit  # Para crear apps interactivas
+
+# Orquestación y Automatización
+mlflow  # Seguimiento de experimentos
